@@ -30,3 +30,5 @@ Makefile.in
 /install-sh
 /missing
 /stamp-h*
+/ltmain.sh
+/libtool
