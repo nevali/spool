@@ -60,7 +60,7 @@ fs_create(void)
 	char *s;
 	size_t l;
 
-	basepath = "store";
+	basepath = config_get("fs:store", "store");
 	p = (STORAGE *) calloc(1, sizeof(STORAGE));
 	if(!p)
 	{
