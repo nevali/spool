@@ -20,6 +20,8 @@
 
 #include "p_spool.h"
 
+static void updateext(ASSET *asset);
+
 /* Create a new asset */
 ASSET *
 asset_create()
@@ -80,6 +82,7 @@ asset_set_path(ASSET *asset, const char *path)
 	free(asset->path);
 	asset->path = p;
 	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
+	updateext(asset);	
 	return 0;
 }
 
@@ -105,8 +108,38 @@ asset_set_path_basedir(ASSET *asset, const char *basedir, size_t baselen, const 
 	free(asset->path);
 	asset->path = p;
 	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
+	updateext(asset);
 	return 0;
 }
+
+int
+asset_set_path_basedir_ext(ASSET *asset, const char *basedir, size_t baselen, const char *name, char *ext)
+{
+	char *p;
+	size_t l;
+
+	if(!baselen)
+	{
+		baselen = strlen(basedir);
+	}
+	l = strlen(name);
+	p = (char *) malloc(baselen + l + strlen(ext) + 2);
+	if(!p)
+	{
+		fprintf(stderr, "%s: failed to allocate memory for asset path\n", short_program_name);
+		exit(EXIT_FAILURE);
+	}
+	strcpy(p, basedir);
+	p[baselen] = '/';
+	strcpy(&(p[baselen + 1]), name);
+	strcpy(&(p[baselen + 1 + l]), ext);
+	free(asset->path);
+	asset->path = p;
+	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
+	updateext(asset);
+	return 0;	
+}
+
 
 /* Set or reset the MIME type of an asset */
 int
@@ -131,4 +164,35 @@ asset_set_type(ASSET *asset, const char *type)
 	asset->type = p;
 	fprintf(stderr, "%s: MIME type of %s is %s\n", short_program_name, asset->path, asset->type);
 	return 0;
+}
+
+int
+asset_copy_attributes(ASSET *dest, const ASSET *src)
+{
+	asset_set_type(dest, src->type);
+	dest->container = src->container;
+	dest->sidecar = src->sidecar;
+	return 0;
+}
+
+static void
+updateext(ASSET *asset)
+{
+	char *t, *p;
+	
+	if(!asset->path)
+	{
+		asset->ext = NULL;
+		return;
+	}
+	p = strrchr(asset->path, '/');
+	t = strrchr(asset->path, '.');
+	if(!t || (p && p > t))
+	{
+		asset->ext = strchr(asset->path, 0);
+	}
+	else
+	{
+		asset->ext = t;
+	}	
 }

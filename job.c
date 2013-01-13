@@ -162,4 +162,36 @@ job_set_source_asset(JOB *job, ASSET *asset)
 	return 0;
 }
 
+/* Set the container asset of a job. The memory-owner of the asset will be the
+ * job from this point on.
+ */
+int
+job_set_container(JOB *job, ASSET *asset)
+{
+	if(!asset->container)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	if(job->container)
+	{
+		asset_free(job->container);
+	}
+	job->container = asset;
+	return 0;
+}
 
+
+/* Set the id of a job. The memory-owner of the id will be the job from
+ * this point on.
+ */
+int
+job_set_id(JOB *job, JOBID *id)
+{
+	if(job->id)
+	{
+		id_free(id);
+	}
+	job->id = id;
+	return 0;
+}

@@ -45,6 +45,12 @@ plugin_load(void)
 		fprintf(stderr, "%s: failed to construct 'ext' identification mechanism: %s\n", short_program_name, strerror(errno));
 		return -1;
 	}
+	fs_storage = fs_create();
+	if(!fs_storage)
+	{
+		fprintf(stderr, "%s: failed to construct 'fs' storage mechanism: %s\n", short_program_name, strerror(errno));
+		return -1;
+	}
 	return 0;
 }
 

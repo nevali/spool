@@ -20,14 +20,55 @@
 
 #include "p_spool.h"
 
+JOBID *
+id_create_uuid(uuid_t uuid)
+{
+	JOBID *p;
+	char *s;
+	size_t c;
+	
+	p = (JOBID *) calloc(1, sizeof(JOBID));
+	if(!p)
+	{
+		return NULL;
+	}
+	memcpy(p->uuid, uuid, sizeof(uuid_t));
+	uuid_unparse_lower(p->uuid, p->formatted);
+	s = p->canonical;
+	for(c = 0; p->formatted[c]; c++)
+	{
+		if(!isxdigit(p->formatted[c]))
+		{
+			continue;
+		}
+		*s = p->formatted[c];
+		s++;
+	}
+	*s = 0;
+	return p;
+}
+
+int
+id_free(JOBID *id)
+{
+	free(id);
+	return 0;
+}
+
 int
 id_assign(JOB *job)
 {
-	uuid_string_t str;
+	uuid_t uu;
+	JOBID *p;
 
-	uuid_generate(job->uuid);
-	uuid_unparse_lower(job->uuid, str);
-	fprintf(stderr, "%s: %s: assigned UUID is %s\n", short_program_name, job->name, str);
+	uuid_generate(uu);
+	p = id_create_uuid(uu);
+	if(!p)
+	{
+		return -1;
+	}
+	job_set_id(job, p);
+	fprintf(stderr, "%s: %s: assigned UUID is %s\n", short_program_name, job->name, job->id->formatted);
 	return 0;
 }
 

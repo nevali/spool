@@ -20,12 +20,15 @@
 
 #include "p_spool.h"
 
-
-
 /* Attempt to locate and load the metadata associated with an asset */
 int
 meta_locate(JOB *job)
 {
+	/* For the moment, this always succeeds. In future, it will be
+	 * plugin-driven so that metadata can be somewhat intelligently
+	 * located and handled.
+	 */
+
 	(void) job;
 
 	return 0;

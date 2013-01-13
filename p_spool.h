@@ -12,6 +12,12 @@
 # ifdef HAVE_DIRENT_H
 #  include <dirent.h>
 # endif
+# ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+# endif
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
 
 # if defined(HAVE_UUID_UUID_H)
 #  include <uuid/uuid.h>
@@ -25,6 +31,7 @@
 
 typedef struct asset_struct ASSET;
 typedef struct job_struct JOB;
+typedef struct jobid_struct JOBID;
 typedef struct source_struct SOURCE;
 typedef struct source_api_struct SOURCE_API;
 typedef struct identify_struct IDENTIFY;
@@ -35,16 +42,24 @@ typedef struct storage_api_struct STORAGE_API;
 struct asset_struct
 {
 	char *path;
+	char *ext;
 	char *type;
 	int container;
 	int sidecar;
+};
+
+struct jobid_struct
+{
+	uuid_t uuid;
+	uuid_string_t formatted;
+	char canonical[33];
 };
 
 struct job_struct
 {
 	int refcount;
 	char *name;
-	uuid_t uuid;
+	JOBID *id;
 	int aborted;
 	int submitted;
 	int completed;
@@ -56,6 +71,8 @@ struct job_struct
 	ASSET *asset;
 	/* Sidecar */
 	ASSET *sidecar;
+	/* Storage container */
+	ASSET *container;
 	/* Stored asset */
 	ASSET *stored;
 	/* Stored sidecar */
@@ -97,9 +114,9 @@ struct identify_struct
 struct storage_api_struct
 {
 	/* Create storage for a job */
-	int (*create_job)(STORAGE *me, JOB *job);
-	/* Copy a job's assets from source to destination storage */
-	int (*copy_source)(STORAGE *me, JOB *job);
+	ASSET *(*create_container)(STORAGE *me, JOB *job);
+	/* Copy an asset to destination storage, returning a new asset */
+	ASSET *(*copy_asset)(STORAGE *me, JOB *dest, ASSET *asset);
 };
 
 # ifndef STORAGE_STRUCT_DEFINED
@@ -122,6 +139,9 @@ int asset_reset(ASSET *asset);
 int asset_set_type(ASSET *asset, const char *type);
 int asset_set_path(ASSET *asset, const char *path);
 int asset_set_path_basedir(ASSET *asset, const char *basedir, size_t baselen, const char *path);
+int asset_set_path_basedir_ext(ASSET *asset, const char *basedir, size_t baselen, const char *name, char *ext);
+int asset_copy_attributes(ASSET *dest, const ASSET *src);
+
 
 JOB *job_create(const char *name, SOURCE *source);
 int job_addref(JOB *job);
@@ -132,23 +152,27 @@ int job_abort(JOB *job);
 int job_begin(JOB *job);
 int job_submitted(JOB *job);
 int job_set_source_asset(JOB *job, ASSET *asset);
+int job_set_container(JOB *job, ASSET *asset);
+int job_set_id(JOB *job, JOBID *id);
 
 int type_identify_asset(ASSET *asset);
 
 int meta_locate(JOB *job);
 
+JOBID *id_create_uuid(uuid_t uuid);
+int id_free(JOBID *id);
 int id_assign(JOB *job);
 
 int process_job(JOB *job);
 
-int store_create_job(JOB *job);
+int store_create_container(JOB *job);
 int store_copy_source(JOB *job);
 
 /* Built-in sources */
 
 SOURCE *file_create(void);
 
-/* Built-in identifiers */
+/* Built-in identification mechanisms */
 
 IDENTIFY *ext_create(void);
 IDENTIFY *sidecar_create(void);

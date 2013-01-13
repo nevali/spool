@@ -32,8 +32,20 @@ process_job(JOB *job)
 		fprintf(stderr, "%s: %s: failed to prepare job for processing: %s\n", short_program_name, job->name, strerror(errno));
 		return -1;
 	}
-	/* copy to storage */
-	/* remove source */
+	r = store_create_container(job);
+	if(r < 0)
+	{
+		fprintf(stderr, "%s: %s: failed to create container for job: %s\n", short_program_name, job->name, strerror(errno));
+		return -1;
+	}
+	r = store_copy_source(job);
+	if(r < 0)
+	{
+		fprintf(stderr, "%s: %s: failed to copy source asset to storage: %s\n", short_program_name, job->name, strerror(errno));
+	}
+	/* Locate suitable recipes */
+	/* Build the recipe dependency graph */
+	/* Begin recipe submission and processing */
 	return 0;
 }
 
