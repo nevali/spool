@@ -1,0 +1,5 @@
+* Configuration
+* Smart identifier assignment (e.g., with database lookup)
+* Different kinds of metadata handling
+* Recipe dependency chains
+* Containers (source-level -- directories -- versus asset-level -- files containing multiple resources)

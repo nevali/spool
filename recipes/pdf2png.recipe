@@ -1,0 +1,7 @@
+[recipe]
+directory=1
+create=1
+exec=convert ${source}[0..] -set filename:page %[fx:t+i] ${output}/%[filename:page].png
+
+[supports]
+application/pdf=1

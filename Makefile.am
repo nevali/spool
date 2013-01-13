@@ -1,0 +1,49 @@
+## Copyright 2013 Mo McRoberts.
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = source identify storage .
+
+spoolconfdir = $(sysconfdir)/$(PACKAGE)
+
+spoolconf_DATA = mime.types
+
+doc_DATA = LICENSE-2.0
+
+libexec_PROGRAMS = spoold
+
+noinst_LTLIBRARIES = libiniparser.la
+
+spoold_SOURCES = p_spool.h \
+	main.c config.c plugin.c \
+	job.c type.c meta.c id.c store.c process.c
+
+spoold_LDADD = \
+	libiniparser.la \
+	source/libbuiltin-sources.la \
+	identify/libbuiltin-identify.la \
+	storage/libbuiltin-storage.la
+
+libiniparser_la_SOURCES = \
+	iniparser/src/dictionary.h \
+	iniparser/src/dictionary.c \
+	iniparser/src/iniparser.h \
+	iniparser/src/iniparser.c
+
+libiniparser_la_LDFLAGS = -static
+
+EXTRA_DIST = \
+	iniparser/AUTHORS iniparser/LICENSE iniparser/README iniparser/INSTALL \
+	iniparser/README
