@@ -136,6 +136,10 @@ file_collect(SOURCE *me)
 			closedir(dir);
 			return NULL;
 		}
+		if(r == 0)
+		{
+			continue;
+		}
 		if(asset->sidecar)
 		{
 			continue;
@@ -196,6 +200,10 @@ file_collect(SOURCE *me)
 				asset_free(asset);
 				closedir(dir);
 				return NULL;
+			}
+			if(r == 0)
+			{
+				continue;
 			}
 			if(asset->sidecar)
 			{

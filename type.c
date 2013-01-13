@@ -45,7 +45,7 @@ type_identify_asset(ASSET *asset)
 	if(!asset->type)
 	{
 		fprintf(stderr, "%s: unable to identify type of '%s'\n", short_program_name, asset->path);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
