@@ -106,13 +106,13 @@ ext_identify(IDENTIFY *me, ASSET *asset)
 		/* Already identified */
 		return 0;
 	}
-	t = strrchr(asset->path, '.');
-	if(!t)
+	if(!asset->ext || !asset->ext[0])
 	{
 		/* No file extension */
 		return 0;
 	}
-	t++;		
+	t = asset->ext;
+	t++;
 	for(c = 0; c < me->ntypes; c++)
 	{
 		for(d = 0; d < me->types[c].nexts; d++)
