@@ -162,6 +162,26 @@ job_set_source_asset(JOB *job, ASSET *asset)
 	return 0;
 }
 
+
+/* Set the container asset of a job. The memory-owner of the asset will be the
+ * job from this point on.
+ */
+int
+job_set_sidecar(JOB *job, ASSET *asset)
+{
+	if(!asset->sidecar)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	if(job->sidecar)
+	{
+		asset_free(job->sidecar);
+	}
+	job->sidecar = asset;
+	return 0;
+}
+
 /* Set the container asset of a job. The memory-owner of the asset will be the
  * job from this point on.
  */

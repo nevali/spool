@@ -20,7 +20,7 @@
 
 #include "p_spool.h"
 
-static void updateext(ASSET *asset);
+static void updatepath(ASSET *asset);
 
 /* Create a new asset */
 ASSET *
@@ -82,7 +82,7 @@ asset_set_path(ASSET *asset, const char *path)
 	free(asset->path);
 	asset->path = p;
 	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
-	updateext(asset);	
+	updatepath(asset);	
 	return 0;
 }
 
@@ -108,7 +108,7 @@ asset_set_path_basedir(ASSET *asset, const char *basedir, size_t baselen, const 
 	free(asset->path);
 	asset->path = p;
 	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
-	updateext(asset);
+	updatepath(asset);
 	return 0;
 }
 
@@ -136,7 +136,7 @@ asset_set_path_basedir_ext(ASSET *asset, const char *basedir, size_t baselen, co
 	free(asset->path);
 	asset->path = p;
 	fprintf(stderr, "%s: asset path is now %s\n", short_program_name, asset->path);
-	updateext(asset);
+	updatepath(asset);
 	return 0;	
 }
 
@@ -176,7 +176,7 @@ asset_copy_attributes(ASSET *dest, const ASSET *src)
 }
 
 static void
-updateext(ASSET *asset)
+updatepath(ASSET *asset)
 {
 	char *t, *p;
 	
@@ -194,5 +194,13 @@ updateext(ASSET *asset)
 	else
 	{
 		asset->ext = t;
-	}	
+	}
+	if(p)
+	{
+		asset->basename = p + 1;
+	}
+	else
+	{
+		asset->basename = asset->path;
+	}
 }

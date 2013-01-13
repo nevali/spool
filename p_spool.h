@@ -45,6 +45,7 @@ typedef struct storage_api_struct STORAGE_API;
 struct asset_struct
 {
 	char *path;
+	char *basename;
 	char *ext;
 	char *type;
 	int container;
@@ -155,6 +156,7 @@ int job_abort(JOB *job);
 int job_begin(JOB *job);
 int job_submitted(JOB *job);
 int job_set_source_asset(JOB *job, ASSET *asset);
+int job_set_sidecar(JOB *job, ASSET *asset);
 int job_set_container(JOB *job, ASSET *asset);
 int job_set_id(JOB *job, JOBID *id);
 

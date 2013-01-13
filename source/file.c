@@ -96,9 +96,9 @@ file_collect(SOURCE *me)
 	DIR *dir;
 	struct dirent *de;
 	const char *srcdir;
-	size_t srclen;
+	size_t srclen, sl, bl;
 	int r;
-
+	
 	srcdir = me->incoming;
 	srclen = me->incominglen;
 	dir = opendir(srcdir);
@@ -148,8 +148,62 @@ file_collect(SOURCE *me)
 			return NULL;
 		}
 		job_set_source_asset(job, asset);
-		asset = NULL;
-		/* Now look for a matching sidecar */
+		/* Look for a matching sidecar */
+		asset = asset_create();
+		if(!asset)
+		{
+			return NULL;
+		}
+		rewinddir(dir);
+		sl = strlen(job->asset->basename);
+		bl = sl - strlen(job->asset->ext);
+		for(;;)
+		{
+			de = readdir(dir);
+			if(!de)
+			{
+				break;
+			}
+			if(de->d_name[0] == '.')
+			{
+				continue;
+			}
+			if(strlen(de->d_name) > sl &&
+			   !strncmp(de->d_name, job->asset->basename, sl) &&
+			   de->d_name[sl] == '.')
+			{
+				asset_reset(asset);
+				/* Candidate filename begins with the asset filename */
+				asset_set_path_basedir(asset, srcdir, srclen, de->d_name);
+			}
+			else if(strlen(de->d_name) > bl &&
+					!strncmp(de->d_name, job->asset->basename, bl) &&
+					strcmp(de->d_name, job->asset->basename) &&
+					de->d_name[bl] == '.')
+			{
+				asset_reset(asset);
+				/* Candidate filename begins with the asset filename */
+				asset_set_path_basedir(asset, srcdir, srclen, de->d_name);
+			}
+			else
+			{
+				continue;
+			}
+			r = type_identify_asset(asset);
+			if(r < 0)
+			{
+				fprintf(stderr, "%s: failed to identify asset '%s': %s\n", short_program_name, de->d_name, strerror(errno));
+				asset_free(asset);
+				closedir(dir);
+				return NULL;
+			}
+			if(asset->sidecar)
+			{
+				job_set_sidecar(job, asset);
+				asset = NULL;
+				break;
+			}
+		}
 		break;
 	}
 	closedir(dir);
