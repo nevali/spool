@@ -20,3 +20,49 @@
 
 #include "p_spool.h"
 
+static dictionary *overrides;
+static dictionary *config;
+
+int
+config_init(void)
+{
+	overrides = dictionary_new(0);
+	if(!overrides)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+int
+config_load(void)
+{
+	int n;
+
+	config = iniparser_load("spoold.conf");
+	if(!config)
+	{
+		return -1;
+	}
+	for(n = 0; n < overrides->n; n++)
+	{
+		iniparser_set(config, overrides->key[n], overrides->val[n]);
+	}
+	dictionary_del(overrides);
+	overrides = NULL;
+	return 0;
+}
+
+int
+config_set(const char *key, const char *value)
+{
+	iniparser_set((overrides ? overrides : config), key, value);
+	return 0;
+}
+
+const char *
+config_get(const char *key, const char *defval)
+{
+	return iniparser_getstring((config ? config : overrides), key, (char *) defval);
+}
+

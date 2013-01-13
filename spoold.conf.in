@@ -1,0 +1,8 @@
+[file]
+incoming=@buildroot@/incoming
+pending=@buildroot@/pending
+failed=@buildroot@/failed
+complete=@buildroot@/complete
+
+[fs]
+store=@buildroot@/store

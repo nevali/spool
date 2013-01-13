@@ -46,6 +46,19 @@ main(int argc, char **argv)
 	(void) argc;
 	(void) argv;
 
+	r = config_init();
+	if(r < 0)
+	{
+		fprintf(stderr, "%s: failed to intialise configuration: %s\n", short_program_name, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	/* Process arguments */
+	r = config_load();
+	if(r < 0)
+	{
+		fprintf(stderr, "%s: failed to load configuration: %s\n", short_program_name, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	r = plugin_load();
 	if(r < 0)
 	{

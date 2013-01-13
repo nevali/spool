@@ -66,11 +66,11 @@ file_create(void)
 	{
 		return NULL;
 	}
-	p->api = &file_api;
-	p->incoming = strdup("incoming");
-	p->aborted = strdup("failed");
-	p->pending = strdup("pending");
-	p->complete = strdup("complete");
+	p->api = &file_api;	
+	p->incoming = strdup(config_get("file:incoming", "incoming"));
+	p->aborted = strdup(config_get("file:failed", "failed"));
+	p->pending = strdup(config_get("file:pending", "pending"));
+	p->complete = strdup(config_get("file:complete", "complete"));
 	if(!p->incoming || !p->aborted || !p->pending || !p->complete)
 	{
 		free(p->incoming);
@@ -102,6 +102,11 @@ file_collect(SOURCE *me)
 	srcdir = me->incoming;
 	srclen = me->incominglen;
 	dir = opendir(srcdir);
+	if(!dir)
+	{
+		fprintf(stderr, "%s: %s: %s\n", short_program_name, srcdir, strerror(errno));
+		return NULL;
+	}
 	asset = NULL;
 	job = NULL;
 	for(;;)

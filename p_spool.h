@@ -28,6 +28,8 @@
 #  include <uuid.h>
 # endif
 
+# include "iniparser.h"
+
 # ifndef EXIT_FAILURE
 #  define EXIT_FAILURE                  1
 # endif
@@ -131,6 +133,11 @@ struct storage_struct
 # endif
 
 extern const char *short_program_name;
+
+int config_init(void);
+int config_load(void);
+int config_set(const char *key, const char *value);
+const char *config_get(const char *key, const char *defval);
 
 int plugin_load(void);
 SOURCE *plugin_source(const char *name);

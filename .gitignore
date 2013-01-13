@@ -4,6 +4,7 @@
 /pending
 /complete
 /store
+spoold.conf
 *.o
 *.obj
 *.exe
@@ -12,7 +13,6 @@
 *.a
 *.lo
 *.la
-*.in
 *.cat
 .deps
 .libs
@@ -23,6 +23,7 @@ Makefile.in
 /autom4te.cache
 /depcomp
 /config.h
+/config.h.in
 /config.status
 /config.cache
 /config.log

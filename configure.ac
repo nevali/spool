@@ -42,11 +42,18 @@ AC_CHECK_FUNC([uuid_generate],,[
 				])
 		])
 
+INCLUDES="$INCLUDES -I\${top_srcdir}/iniparser/src"
+AC_SUBST([INCLUDES])
+
+buildroot="`pwd`"
+AC_SUBST([buildroot])
+
 AC_CONFIG_FILES([
 Makefile
 source/Makefile
 identify/Makefile
 storage/Makefile
+spoold.conf
 ])
 
 AC_OUTPUT
