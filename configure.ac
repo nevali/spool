@@ -34,7 +34,7 @@ else
 fi
 AC_SUBST([AM_CPPFLAGS])
 
-AC_CHECK_HEADERS([unistd.h dirent.h uuid/uuid.h uuid.h sys/types.h sys/stat.h])
+AC_CHECK_HEADERS([unistd.h dirent.h uuid/uuid.h uuid.h sys/types.h sys/stat.h fcntl.h])
 
 AC_CHECK_FUNC([uuid_generate],,[
 		AC_CHECK_LIB([uuid],[uuid_generate],,[

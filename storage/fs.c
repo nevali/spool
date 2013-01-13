@@ -44,6 +44,13 @@ static STORAGE_API fs_api = {
 	fs_copy_asset,
 };
 
+/* Utilities */
+static int copy_file(const char *srcpath, const char *destpath);
+static int open_file(const char *path, int opt, int mode);
+static int close_file(int filedes);
+static ssize_t read_file(int filedes, char *buf, ssize_t len);
+static ssize_t write_file(int filedes, const char *buf, ssize_t len);
+
 /* Create an instance of the storage mechanism */
 STORAGE *
 fs_create(void)
@@ -160,6 +167,7 @@ static ASSET *
 fs_copy_asset(STORAGE *me, JOB *job, ASSET *asset)
 {
 	ASSET *dest;
+	int r;
 
 	(void) me;
 	
@@ -171,6 +179,141 @@ fs_copy_asset(STORAGE *me, JOB *job, ASSET *asset)
 	asset_set_path_basedir_ext(dest, job->container->path, 0, job->id->canonical, asset->ext);
 	asset_copy_attributes(dest, asset);
 	fprintf(stderr, "%s: %s: copying '%s' to '%s'\n", short_program_name, job->name, asset->path, dest->path);
+	/* Perform a file-copy operation */
+	r = copy_file(asset->path, dest->path);
+	if(r < 0)
+	{
+		asset_free(dest);
+		return NULL;
+	}
 	return dest;
 }
 
+static int
+copy_file(const char *srcpath, const char *destpath)
+{
+	static char *buf;
+	static ssize_t bufsize;
+
+	int sfd, dfd, e;
+	ssize_t rlen, r;
+
+	/* Use and re-use a static buffer */
+	if(!buf)
+	{
+		/* Use a 4MB buffer */
+		bufsize = (4 * 1024 * 1024);
+		buf = malloc(bufsize);
+		if(!buf)
+		{
+			return -1;
+		}
+	}
+	sfd = open_file(srcpath, O_RDONLY, 0);
+	if(sfd < 0)
+	{
+		return -1;
+	}
+	dfd = open_file(destpath, O_WRONLY|O_CREAT, 0666);
+	if(dfd < 0)
+	{
+		e = errno;
+		close_file(sfd);
+		errno = e;
+		return -1;
+	}
+	for(;;)
+	{
+		rlen = read_file(sfd, buf, bufsize);
+		if(rlen == -1)
+		{
+			/* Read failed */
+			close_file(sfd);
+			close_file(dfd);
+			return -1;
+		}
+		if(!rlen)
+		{
+			break;
+		}
+		r = write_file(sfd, buf, rlen);
+		if(r == -1)
+		{
+			/* Write failed */
+			close_file(sfd);
+			close_file(dfd);
+			return -1;
+		}
+	}
+	close_file(sfd);
+	close_file(dfd);
+	return 0;
+}
+
+static int
+open_file(const char *path, int opt, int mode)
+{
+	int fd;
+
+	do
+	{
+		fd = open(path, opt, mode);
+	}
+	while(fd == -1 && errno == EINTR);
+	return fd;
+}
+
+static int
+close_file(int filedes)
+{
+
+	int r;
+
+	do
+	{
+		r = close(filedes);
+	}
+	while(r == -1 && errno == EINTR);
+	return r;
+}
+
+static ssize_t
+read_file(int filedes, char *buf, ssize_t len)
+{
+	ssize_t r;
+
+	do
+	{
+		r = read(filedes, buf, len);
+	}
+	while(r == -1 && errno == EINTR);
+	return r;
+}
+
+static ssize_t
+write_file(int filedes, const char *buf, ssize_t len)
+{
+	ssize_t r;
+
+	while(len)
+	{
+		do
+		{
+			r = write(filedes, buf, len);
+		}
+		while(r == -1 && errno == EINTR);
+		if(r == -1)
+		{
+			return -1;
+		}
+		if(r > len)
+		{
+			/* Nonsensical */
+			errno = EINVAL;
+			return -1;
+		}
+		len -= r;
+		buf += r;
+	}
+	return 0;
+}

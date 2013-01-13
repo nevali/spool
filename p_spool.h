@@ -18,6 +18,9 @@
 # ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 # endif
+# ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+# endif
 
 # if defined(HAVE_UUID_UUID_H)
 #  include <uuid/uuid.h>
