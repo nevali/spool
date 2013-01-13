@@ -14,7 +14,7 @@
 
 noinst_LTLIBRARIES = libbuiltin-identify.la
 
-libbuiltin_identify_la_SOURCES = ext.c
+libbuiltin_identify_la_SOURCES = ext.c sidecar.c
 
 libbuiltin_identify_la_INCLUDES = -I${top_srcdir} -I${top_builddir}
 libbuiltin_identify_la_LDFLAGS = -static

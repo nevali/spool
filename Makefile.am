@@ -28,7 +28,7 @@ noinst_LTLIBRARIES = libiniparser.la
 
 spoold_SOURCES = p_spool.h \
 	main.c config.c plugin.c \
-	job.c type.c meta.c id.c store.c process.c
+	asset.c job.c type.c meta.c id.c store.c process.c
 
 spoold_LDADD = \
 	libiniparser.la \

@@ -63,9 +63,10 @@ job_free(JOB *job)
 		return job->refcount;
 	}
 	free(job->name);
-	free(job->path);
-	free(job->sidecar);
-	free(job->type);
+	asset_free(job->asset);
+	asset_free(job->sidecar);
+	asset_free(job->stored);
+	asset_free(job->stored_sidecar);
 	free(job);
 	return 0;
 }
@@ -121,6 +122,20 @@ job_abort(JOB *job)
 	return job_free(job);
 }
 
+/* Begin processing a job (prepare for submission) */
+int
+job_begin(JOB *job)
+{
+	int r;
+	
+	r = job->source->api->begin(job->source, job);
+	if(r < 0)
+	{
+		return -1;
+	}
+	return 0;
+}
+
 /* Mark a job as having been submitted for processing */
 int
 job_submitted(JOB *job)
@@ -133,28 +148,18 @@ job_submitted(JOB *job)
 	return job_free(job);
 }
 
-/* Set or reset the MIME type of a job's asset */
+/* Set the source asset of a job. The memory-owner of the asset will be the
+ * job from this point on.
+ */
 int
-job_set_type(JOB *job, const char *type)
+job_set_source_asset(JOB *job, ASSET *asset)
 {
-	char *p;
-
-	if(type)
+	if(job->asset)
 	{
-		p = strdup(type);
-		if(!p)
-		{
-			fprintf(stderr, "%s: %s: failed to allocate memory for MIME type\n", short_program_name, job->name);
-			exit(EXIT_FAILURE);
-		}
+		asset_free(job->asset);
 	}
-	else
-	{
-		p = NULL;
-	}
-	free(job->type);
-	job->type = p;
-	fprintf(stderr, "%s: %s: MIME type is %s\n", short_program_name, job->name, job->type);
+	job->asset = asset;
 	return 0;
 }
+
 

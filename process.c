@@ -23,7 +23,15 @@
 int
 process_job(JOB *job)
 {
+	int r;
+
 	fprintf(stderr, "%s: %s: processing job\n", short_program_name, job->name);
+	r = job_begin(job);
+	if(r < 0)
+	{
+		fprintf(stderr, "%s: %s: failed to prepare job for processing: %s\n", short_program_name, job->name, strerror(errno));
+		return -1;
+	}
 	/* copy to storage */
 	/* remove source */
 	return 0;

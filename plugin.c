@@ -22,7 +22,7 @@
 
 static SOURCE *file_source;
 static STORAGE *fs_storage;
-static IDENTIFY *identify_plugins[2];
+static IDENTIFY *identify_plugins[3];
 
 int
 plugin_load(void)
@@ -34,6 +34,12 @@ plugin_load(void)
 		return -1;
 	}
 	identify_plugins[0] = ext_create();
+	if(!identify_plugins[0])
+	{
+		fprintf(stderr, "%s: failed to construct 'ext' identification mechanism: %s\n", short_program_name, strerror(errno));
+		return -1;
+	}
+	identify_plugins[1] = sidecar_create();
 	if(!identify_plugins[0])
 	{
 		fprintf(stderr, "%s: failed to construct 'ext' identification mechanism: %s\n", short_program_name, strerror(errno));

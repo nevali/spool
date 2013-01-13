@@ -44,7 +44,7 @@ struct mimetype
 };
 
 /* Identification API methods */
-static int ext_identify(IDENTIFY *me, JOB *job);
+static int ext_identify(IDENTIFY *me, ASSET *asset);
 
 /* Identification API */
 static IDENTIFY_API ext_api = {
@@ -96,12 +96,17 @@ ext_create(void)
 }
 
 static int
-ext_identify(IDENTIFY *me, JOB *job)
+ext_identify(IDENTIFY *me, ASSET *asset)
 {
 	size_t c, d;
 	const char *t;
 
-	t = strrchr(job->path, '.');
+	if(asset->type)
+	{
+		/* Already identified */
+		return 0;
+	}
+	t = strrchr(asset->path, '.');
 	if(!t)
 	{
 		/* No file extension */
@@ -114,7 +119,7 @@ ext_identify(IDENTIFY *me, JOB *job)
 		{
 			if(!strcmp(t, me->types[c].exts[d]))
 			{
-				job_set_type(job, me->types[c].type);
+				asset_set_type(asset, me->types[c].type);
 				return 1;
 			}
 		}

@@ -3,6 +3,7 @@
 /failed
 /pending
 /complete
+/store
 *.o
 *.obj
 *.exe

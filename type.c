@@ -20,29 +20,9 @@
 
 #include "p_spool.h"
 
+/* Attempt to identify an asset using the identification plug-ins */
 int
-type_is_sidecar(const char *name)
-{
-	const char *t;
-
-	t = strrchr(name, '.');
-	if(!t)
-	{
-		return 0;
-	}
-	if(!strcmp(t, ".xmp"))
-	{
-		return 1;
-	}
-	if(!strcmp(t, ".xml"))
-	{
-		return 1;
-	}
-	return 0;
-}
-
-int
-type_identify_job(JOB *job)
+type_identify_asset(ASSET *asset)
 {
 	IDENTIFY **list;
 	size_t c;
@@ -56,16 +36,16 @@ type_identify_job(JOB *job)
 	}
 	for(c = 0; list[c]; c++)
 	{
-		r = list[c]->api->identify(list[c], job);
+		r = list[c]->api->identify(list[c], asset);
 		if(r < 0)
 		{			
 			return -1;
 		}
-		else if(r > 0)
-		{
-			return 0;
-		}
 	}
-	fprintf(stderr, "%s: %s: unable to identify '%s'\n", short_program_name, job->name, job->path);
-	return -1;
+	if(!asset->type)
+	{
+		fprintf(stderr, "%s: unable to identify type of '%s'\n", short_program_name, asset->path);
+		return -1;
+	}
+	return 0;
 }

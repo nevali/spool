@@ -20,6 +20,9 @@
 
 #include "p_spool.h"
 
+
+
+/* Attempt to locate and load the metadata associated with an asset */
 int
 meta_locate(JOB *job)
 {

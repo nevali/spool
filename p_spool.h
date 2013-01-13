@@ -23,6 +23,7 @@
 #  define EXIT_FAILURE                  1
 # endif
 
+typedef struct asset_struct ASSET;
 typedef struct job_struct JOB;
 typedef struct source_struct SOURCE;
 typedef struct source_api_struct SOURCE_API;
@@ -31,24 +32,46 @@ typedef struct identify_api_struct IDENTIFY_API;
 typedef struct storage_struct STORAGE;
 typedef struct storage_api_struct STORAGE_API;
 
+struct asset_struct
+{
+	char *path;
+	char *type;
+	int container;
+	int sidecar;
+};
+
 struct job_struct
 {
 	int refcount;
 	char *name;
-	SOURCE *source;
-	char *path;
-	char *sidecar;
-	char *type;	
 	uuid_t uuid;
 	int aborted;
 	int submitted;
 	int completed;
+	/* Source handler */
+	SOURCE *source;
+	/* Storage handler */
+	STORAGE *storage;
+	/* Source asset */
+	ASSET *asset;
+	/* Sidecar */
+	ASSET *sidecar;
+	/* Stored asset */
+	ASSET *stored;
+	/* Stored sidecar */
+	ASSET *stored_sidecar;
 };
 
 struct source_api_struct
 {
+	/* Collect a job from the source */
 	JOB *(*collect)(SOURCE *me);
+	/* A job has begun processing (and is now 'pending') */
+	int (*begin)(SOURCE *me, JOB *job);
+	/* A job has been aborted */
 	int (*abort)(SOURCE *me, JOB *job);
+	/* A job has been completed */
+	int (*complete)(SOURCE *me, JOB *job);
 };
 
 # ifndef SOURCE_STRUCT_DEFINED
@@ -60,7 +83,8 @@ struct source_struct
 
 struct identify_api_struct
 {
-	int (*identify)(IDENTIFY *me, JOB *job);
+	/* Identify an asset */
+	int (*identify)(IDENTIFY *me, ASSET *asset);
 };
 
 # ifndef IDENTIFY_STRUCT_DEFINED
@@ -72,7 +96,9 @@ struct identify_struct
 
 struct storage_api_struct
 {
+	/* Create storage for a job */
 	int (*create_job)(STORAGE *me, JOB *job);
+	/* Copy a job's assets from source to destination storage */
 	int (*copy_source)(STORAGE *me, JOB *job);
 };
 
@@ -90,17 +116,24 @@ SOURCE *plugin_source(const char *name);
 IDENTIFY **plugin_identify_list(void);
 STORAGE *plugin_storage(const char *name);
 
+ASSET *asset_create(void);
+int asset_free(ASSET *asset);
+int asset_reset(ASSET *asset);
+int asset_set_type(ASSET *asset, const char *type);
+int asset_set_path(ASSET *asset, const char *path);
+int asset_set_path_basedir(ASSET *asset, const char *basedir, size_t baselen, const char *path);
+
 JOB *job_create(const char *name, SOURCE *source);
 int job_addref(JOB *job);
 int job_free(JOB *job);
 JOB *job_collect(void);
 JOB *job_collect_wait(void);
 int job_abort(JOB *job);
+int job_begin(JOB *job);
 int job_submitted(JOB *job);
-int job_set_type(JOB *job, const char *type);
+int job_set_source_asset(JOB *job, ASSET *asset);
 
-int type_identify_job(JOB *job);
-int type_is_sidecar(const char *filename);
+int type_identify_asset(ASSET *asset);
 
 int meta_locate(JOB *job);
 
@@ -118,6 +151,7 @@ SOURCE *file_create(void);
 /* Built-in identifiers */
 
 IDENTIFY *ext_create(void);
+IDENTIFY *sidecar_create(void);
 
 /* Built-in storage */
 

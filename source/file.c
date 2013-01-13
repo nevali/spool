@@ -31,20 +31,29 @@ struct source_struct
 	size_t incominglen;
 	char *aborted;
 	size_t abortedlen;
+	char *pending;
+	size_t pendinglen;
+	char *complete;
+	size_t completelen;
 };
 
 /* Source API methods */
 static JOB *file_collect(SOURCE *me);
+static int file_begin(SOURCE *me, JOB *job);
 static int file_abort(SOURCE *me, JOB *job);
+static int file_complete(SOURCE *me, JOB *job);
 
 /* Source API method table */
 static SOURCE_API file_api = {
 	file_collect,
-	file_abort
+	file_begin,
+	file_abort,
+	file_complete
 };
 
 /* Internal utilities */
 static const char *basename(const char *filepath);
+static int movetodest(JOB *job, const char *destdir, size_t destlen, int updatepaths);
 
 /* Construct a new source instance for the 'file' handler */
 SOURCE *
@@ -59,35 +68,42 @@ file_create(void)
 	}
 	p->api = &file_api;
 	p->incoming = strdup("incoming");
-	if(!p->incoming)
+	p->aborted = strdup("failed");
+	p->pending = strdup("pending");
+	p->complete = strdup("complete");
+	if(!p->incoming || !p->aborted || !p->pending || !p->complete)
 	{
+		free(p->incoming);
+		free(p->aborted);
+		free(p->pending);
+		free(p->complete);
 		free(p);
 		return NULL;
 	}
 	p->incominglen = strlen(p->incoming);
-	p->aborted = strdup("failed");
-	if(!p->aborted)
-	{
-		free(p);
-		return NULL;
-	}
 	p->abortedlen = strlen(p->aborted);
+	p->pendinglen = strlen(p->pending);
+	p->completelen = strlen(p->complete);
 	return p;
 }
 
+/* Collect a job by scanning a source directory */
 static JOB *
 file_collect(SOURCE *me)
 {
 	JOB *job;
+	ASSET *asset;
 	DIR *dir;
 	struct dirent *de;
 	const char *srcdir;
 	size_t srclen;
+	int r;
 
 	srcdir = me->incoming;
 	srclen = me->incominglen;
-	job = NULL;
 	dir = opendir(srcdir);
+	asset = NULL;
+	job = NULL;
 	for(;;)
 	{
 		de = readdir(dir);
@@ -99,46 +115,94 @@ file_collect(SOURCE *me)
 		{
 			continue;
 		}
-		if(type_is_sidecar(de->d_name))
+		if(asset)
+		{
+			asset_reset(asset);
+		}
+		else
+		{
+			asset = asset_create();
+			if(!asset)
+			{
+				return NULL;
+			}
+		}
+		asset_set_path_basedir(asset, srcdir, srclen, de->d_name);
+		r = type_identify_asset(asset);
+		if(r < 0)
+		{
+			fprintf(stderr, "%s: failed to identify asset '%s': %s\n", short_program_name, de->d_name, strerror(errno));
+			asset_free(asset);
+			closedir(dir);
+			return NULL;
+		}
+		if(asset->sidecar)
 		{
 			continue;
 		}
 		job = job_create(de->d_name, me);
 		if(!job)
 		{
+			asset_free(asset);
 			closedir(dir);
 			return NULL;
 		}
-		job->path = (char *) malloc(srclen + strlen(de->d_name) + 2);
-		if(!job->path)
-		{
-			job_free(job);
-			closedir(dir);
-			return NULL;
-		}
-		strcpy(job->path, srcdir);
-		job->path[srclen] = '/';
-		strcpy(&(job->path[srclen + 1]), de->d_name);
+		job_set_source_asset(job, asset);
+		asset = NULL;
+		/* Now look for a matching sidecar */
 		break;
 	}
 	closedir(dir);
+	asset_free(asset);
 	return job;
 }
 
+/* Abort a job */
 static int
 file_abort(SOURCE *me, JOB *job)
 {
-	const char *destdir, *t, *st;
-	char *fn;
-	size_t destlen, l, sl;
+	return movetodest(job, me->aborted, me->abortedlen, 0);
+}
+
+/* Prepare a job for processing */
+static int
+file_begin(SOURCE *me, JOB *job)
+{
+	return movetodest(job, me->pending, me->pendinglen, 1);
+}
+
+/* A job has finished processing */
+static int
+file_complete(SOURCE *me, JOB *job)
+{
+	return movetodest(job, me->complete, me->completelen, 0);
+}
+
+static const char *
+basename(const char *filepath)
+{
+	const char *t;
 	
-	destdir = me->aborted;
-	destlen = me->abortedlen;
-	t = basename(job->path);
+	t = strrchr(filepath, '/');
+	if(t)
+	{
+		return t + 1;
+	}
+	return filepath;
+}
+
+static int
+movetodest(JOB *job, const char *destdir, size_t destlen, int updatepaths)
+{
+	const char *t, *st;
+	char *fn;
+	size_t l, sl;
+
+	t = basename(job->asset->path);
 	l = strlen(t);
 	if(job->sidecar)
 	{
-		st = basename(job->sidecar);
+		st = basename(job->sidecar->path);
 		sl = strlen(st);
 		if(sl > l)
 		{
@@ -158,15 +222,18 @@ file_abort(SOURCE *me, JOB *job)
 	strcpy(fn, destdir);
 	fn[destlen] = '/';
 	strcpy(&(fn[destlen + 1]), t);
-	fprintf(stderr, "%s: %s: moving '%s' to '%s'\n", short_program_name, job->name, job->path, fn);
-	if(rename(job->path, fn))
+	fprintf(stderr, "%s: %s: moving '%s' to '%s'\n", short_program_name, job->name, job->asset->path, fn);
+	if(rename(job->asset->path, fn))
 	{
-		fprintf(stderr, "%s: %s: failed to move '%s' to '%s': %s\n", short_program_name, job->name, job->path, fn, strerror(errno));
+		fprintf(stderr, "%s: %s: failed to move '%s' to '%s': %s\n", short_program_name, job->name, job->asset->path, fn, strerror(errno));
 		free(fn);
 		return -1;
 	}
-	free(fn);
-	if(job->sidecar)
+	if(updatepaths)
+	{
+		asset_set_path(job->asset, fn);
+	}
+/*	if(job->sidecar)
 	{
 		strcpy(fn, destdir);
 		fn[destlen] = '/';
@@ -178,20 +245,11 @@ file_abort(SOURCE *me, JOB *job)
 			free(fn);
 			return -1;
 		}
-		free(fn);
-	}
+		if(updatepaths)
+		{
+			job_set_sidecar(job, fn);
+		}
+		} */
+	free(fn);
 	return 0;
-}
-
-static const char *
-basename(const char *filepath)
-{
-	const char *t;
-	
-	t = strrchr(filepath, '/');
-	if(t)
-	{
-		return t + 1;
-	}
-	return filepath;
 }

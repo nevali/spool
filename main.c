@@ -27,17 +27,13 @@ const char *short_program_name = "spoold";
 /* spoold runs continually, collecting jobs from one or more sources, and
  * then:--
  *
- * 1. Identify the type of asset contained within the job. Although this can
- *    be augmented by plugins, a fallback is file extension to MIME type
- *    mapping.
- *
- * 2. Locate and load metadata associated with the asset. It might be inbound,
+ * 1. Locate and load metadata associated with the asset. It might be inbound,
  *    or it might be contained within a sidecar. At a minimum, there must be
  *    a combination of 'kind' and 'key'.
  *
- * 3. Assign a UUID (possibly updating a database along the way)
+ * 2. Assign a UUID (possibly updating a database along the way)
  *
- * 4. Submit the job for processing by recipes which operate on the asset's
+ * 3. Submit the job for processing by recipes which operate on the asset's
  *    type.
  */
 
@@ -46,6 +42,9 @@ main(int argc, char **argv)
 {
 	JOB *job;
 	int r;
+
+	(void) argc;
+	(void) argv;
 
 	r = plugin_load();
 	if(r < 0)
@@ -60,13 +59,6 @@ main(int argc, char **argv)
 		{
 			fprintf(stderr, "%s: unexpected error while waiting for a job: %s\n", short_program_name, strerror(errno));
 			exit(EXIT_FAILURE);
-		}
-		r = type_identify_job(job);
-		if(r < 0)
-		{
-			fprintf(stderr, "%s: %s: failed to identify type of job\n", short_program_name, job->name);
-			job_abort(job);
-			continue;
 		}
 		r = meta_locate(job);
 		if(r < 0)
