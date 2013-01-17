@@ -14,7 +14,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = source identify storage .
+SUBDIRS = source identify storage @liburi_SUBDIRS@ .
 
 spoolconfdir = $(sysconfdir)/$(PACKAGE)
 
@@ -26,6 +26,8 @@ libexec_PROGRAMS = spoold
 
 noinst_LTLIBRARIES = libiniparser.la
 
+spoold_CPPFLAGS = $(liburi_CFLAGS)
+
 spoold_SOURCES = p_spool.h \
 	main.c config.c plugin.c \
 	asset.c job.c type.c meta.c id.c store.c process.c
@@ -34,7 +36,7 @@ spoold_LDADD = \
 	libiniparser.la \
 	source/libbuiltin-sources.la \
 	identify/libbuiltin-identify.la \
-	storage/libbuiltin-storage.la
+	storage/libbuiltin-storage.la @liburi_LIBS@
 
 libiniparser_la_SOURCES = \
 	iniparser/src/dictionary.h \

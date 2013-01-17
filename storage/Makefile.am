@@ -16,6 +16,6 @@ noinst_LTLIBRARIES = libbuiltin-storage.la
 
 libbuiltin_storage_la_SOURCES = fs.c
 
-libbuiltin_storage_la_INCLUDES = -I${top_srcdir} -I${top_builddir}
+libbuiltin_storage_la_CPPFLAGS = -I${top_srcdir} -I${top_builddir} $(liburi_CFLAGS)
 libbuiltin_storage_la_LDFLAGS = -static
 

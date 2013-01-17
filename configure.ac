@@ -12,6 +12,8 @@
 ##  See the License for the specific language governing permissions and
 ##  limitations under the License.
 
+m4_pattern_allow([^PKG_CONFIG(_PATH)?$])dnl
+
 AC_INIT([spool],[master])
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -44,6 +46,21 @@ AC_CHECK_FUNC([uuid_generate],,[
 
 INCLUDES="$INCLUDES -I\${top_srcdir}/iniparser/src"
 AC_SUBST([INCLUDES])
+
+if test -d "$srcdir/liburi" ; then
+   AC_CONFIG_SUBDIRS([liburi])
+   liburi_LIBS="\${top_builddir}/liburi/liburi.la"
+   liburi_CFLAGS="-I\${top_srcdir}/liburi"
+   liburi_SUBDIRS="liburi"
+   PKG_CONFIG_PATH="$srcdir/liburi:$PKG_CONFIG_PATH" ; export PKG_CONFIG_PATH
+else
+	PKG_CHECK_MODULES([liburi],[liburi],,[
+		AC_MSG_ERROR([cannot locate the liburi package])
+	])
+fi
+AC_SUBST([liburi_LIBS])
+AC_SUBST([liburi_CFLAGS])
+AC_SUBST([liburi_SUBDIRS])
 
 buildroot="`pwd`"
 AC_SUBST([buildroot])

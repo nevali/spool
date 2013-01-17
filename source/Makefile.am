@@ -16,6 +16,6 @@ noinst_LTLIBRARIES = libbuiltin-sources.la
 
 libbuiltin_sources_la_SOURCES = file.c
 
-libbuiltin_sources_la_INCLUDES = -I${top_srcdir} -I${top_builddir}
+libbuiltin_sources_la_CPPFLAGS = -I${top_srcdir} -I${top_builddir} $(liburi_CFLAGS)
 libbuiltin_sources_la_LDFLAGS = -static
 

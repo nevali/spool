@@ -28,6 +28,8 @@
 #  include <uuid.h>
 # endif
 
+# include <liburi.h>
+
 # include "iniparser.h"
 
 # ifndef EXIT_FAILURE
